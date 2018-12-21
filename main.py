@@ -14,6 +14,7 @@ from data.models import *
 #user = User(name="masnun", email="masnun@gmail.com")
 #user.save()
 
+
 # Application logic
 import time
 import uuid
@@ -23,25 +24,29 @@ from sense_hat import SenseHat
 command = "cmd"
 
 # Variables
-voc = os.system('./Airsensor/usb-sensors-linux/trunk/airsensor/airsensor -o -v')
-feinstaub2 = os.system('./Feinstaub2')
-feinstaub10 = os.system('./Feinstaub10')
+voc = os.system('./airsensor -o -v')
+feinstaubpm25 = os.system('./Feinstaub2.py')
+feinstaubpm100 = os.system('./Feinstaub10.py')
 sense = SenseHat()
-temperature = sense.get_temperature()
-pressure = sense.get_pressure()
-humidity = sense.get_humidity()
+temperatur = sense.get_temperature()
+luftdruck = sense.get_pressure()
+luftfeuchtigkeit = sense.get_humidity()
 
 # uuid, remove -
 uuidnum = uuid.uuid4()
 uuidstr = str(uuidnum)
 for letter in '-':
-    sos = uuidstr.replace(letter, '')
-    finalid = sos
+    uid = uuidstr.replace(letter, '')
+    finalid = uid
 # timestamp
 # date
-tmstp = datetime.date.today()
+datum = datetime.date.today()
 # datetime
-dattime = datetime.datetime.now()
+datumzeit = datetime.datetime.now()
+
+# Objects
+messdaten = Messdaten(UID=uid, Temperatur=temperatur, Luftdruck=luftdruck, Luftfeuchtigkeit=luftfeuchtigkeit, VOC=voc, FEINSTAUBPM25=feinstaubpm25, FEINSTAUBPM100=feinstaubpm100, Datum=datum, DatumZeit=datumzeit)
+messdaten.save() 
 
 
 sense.show_message("#", scroll_speed=1)
