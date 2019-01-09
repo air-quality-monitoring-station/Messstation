@@ -20,41 +20,18 @@ from aqms.models import *
 
 class Command(BaseCommand):
     
-    # Application logic
+    # Application logic,
     def handle(self, *args, **kwargs):
         print("get data")
-        # Variables
-        #voc = os.system('./airsensor -o -v')
-        #feinstaubpm25 = os.system('./Feinstaub2.py')
-        #feinstaubpm100 = os.system('./Feinstaub10.py')
-        #sense = SenseHat()
-        #temperatur = sense.get_temperature()
-        #luftdruck = sense.get_pressure()
-        #luftfeuchtigkeit = sense.get_humidity()
+
         self.messdaten = MESSDATEN()
-        # Variables
-        self.temperatur = 22
-        self.luftdruck = 949
-        self.luftfeuchtigkeit = 53
-        self.voc = 2.5864
-        self.feinstaubpm25= 4.279
-        self.feinstaubpm100 = 5.627
 
         values_for_db = self.messdaten.for_db()
 
         print(self.messdaten)
         print(self.messdaten.get_uuid())
-        # uuid, remove -
-        self.uuid = str(uuid.uuid4())
-        print("fak2")
-        # timestamp
-        # date
-        self.datum = datetime.date.today()
-        # datetime
-        self.datumzeit = datetime.datetime.now()
 
-        
-        # Objects
+        # push to db
         messdaten = Messdaten(UID=values_for_db['uuid'], Temperatur=values_for_db['temperatur'], Luftdruck=values_for_db['luftdruck'], Luftfeuchtigkeit=values_for_db['luftfeuchtigkeit'], VOC=values_for_db['voc'], FEINSTAUBPM25=values_for_db['feinstaubpm25'], FEINSTAUBPM100=values_for_db['feinstaubpm100'], Datum=values_for_db['datum'], DatumZeit=values_for_db['datumzeit'])
         messdaten.save() 
 
@@ -86,10 +63,17 @@ class MESSDATEN:
         self._datumzeit = datetime.datetime.now()
 
     def __repr__(self):
-            return f'{self.__class__.__name__}({self._datumzeit})'
+            return str(self.__class__.__name__) + '; ' + str(self._datumzeit)'
 
     def __str__(self):
-            return f'{self._uuid}, {self._luftdruck}, {self._luftfeuchtigkeit}, {self._voc}, {self._feinstaubpm25}, {self._feinstaubpm100}, {self._datum}, {self._datumzeit}'
+            return str(self._uuid) + '; ' + \
+                   str(self._luftdruck) + '; ' + \
+                   str(self._luftfeuchtigkeit) + '; ' + \
+                   str(self._voc) + '; ' + \
+                   str(self._feinstaubpm25) + '; ' + \
+                   str(self._feinstaubpm100) + '; ' + \
+                   str(self._datum) + '; ' + \
+                   str(self._datumzeit)
 
     # props
     def get_uuid(self):
