@@ -35,7 +35,7 @@ void help() {
 	printf("AirSensor [options]\n");
 	printf("Options:\n");
 	printf("-d = debug printout\n");
-	printf("-v = Print VOC value only, nothing returns if value out of range (450-2000)\n");
+	printf("-v = Print VOC value only, nothing returns if value out of range (100-10000)\n");
 	printf("-o = One value and then exit\n");
 	printf("-h = Help, this printout\n");
 	exit(0);
@@ -243,10 +243,10 @@ int main(int argc, char *argv[])
 		if (debug == 1)
 			printout("DEBUG: Return code from USB read: ", ret);
  		
- 		// According to AppliedSensor specifications the output range is between 450 and 2000
+ 		// According to AppliedSensor specifications the output range is between 100 and 10000
  		// So only printout values between this range
  		
-		if ( voc >= 450 && voc <= 2001) {
+		if ( voc >= 100 && voc <= 10000) {
 			if (print_voc_only == 1) {
 				printf("%d\n", voc);
 			} else {

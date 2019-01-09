@@ -60,9 +60,9 @@ class MESSDATEN:
         self._temperatur = sense.get_temperature()
         self._luftdruck = sense.get_pressure()
         self._luftfeuchtigkeit = sense.get_humidity()
-        self._voc = os.system('./airsensor -o -v')
-        self._feinstaubpm25 = 0 #os.system('../../bash/Feinstaub25.py')
-        self._feinstaubpm100 = 0 #os.system('../../Feinstaub100.py')
+        self._voc = os.popen('aqms/external/c/airsensor -o -v').read().rstrip('\n')
+        self._feinstaubpm25 = os.popen('aqms/external/bash/Feinstaub25.sh').read().rstrip('\n')
+        self._feinstaubpm100 = os.popen('aqms/external/bash/Feinstaub100.sh').read().rstrip('\n')
         self._datum = datetime.date.today()
         self._datumzeit = datetime.datetime.now()
 
@@ -71,6 +71,7 @@ class MESSDATEN:
 
     def __str__(self):
             return str(self._uuid) + '; ' + \
+                   str(self._temperatur) + '; ' + \
                    str(self._luftdruck) + '; ' + \
                    str(self._luftfeuchtigkeit) + '; ' + \
                    str(self._voc) + '; ' + \
