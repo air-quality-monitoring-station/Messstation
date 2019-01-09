@@ -1,5 +1,6 @@
 import os
 
+DEBUG = True
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # example) SQLite
@@ -17,14 +18,14 @@ DATABASES = {
          'NAME': 'aqms',
          'USER': 'aqms',
          'PASSWORD': 'jnBDb33RmSPfycev',
-         'HOST': '10.41.0.3',
+         'HOST': '10.41.0.5',
          'PORT': '3306',
      }
  }
 
 
 INSTALLED_APPS = (
-    'data',
+    'aqms',
 )
 
 SECRET_KEY = 'REPLACE_ME'
