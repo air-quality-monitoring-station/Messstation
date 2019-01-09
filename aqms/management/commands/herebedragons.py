@@ -60,9 +60,9 @@ class MESSDATEN:
         self._temperatur = sense.get_temperature()
         self._luftdruck = sense.get_pressure()
         self._luftfeuchtigkeit = sense.get_humidity()
-        self._voc = 2.5864
-        self._feinstaubpm25= 4.279
-        self._feinstaubpm100 = 5.627
+        self._voc = os.system('./airsensor -o -v')
+        self._feinstaubpm25 = 0 #os.system('../../bash/Feinstaub25.py')
+        self._feinstaubpm100 = 0 #os.system('../../Feinstaub100.py')
         self._datum = datetime.date.today()
         self._datumzeit = datetime.datetime.now()
 
