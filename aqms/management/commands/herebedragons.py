@@ -13,7 +13,7 @@ import datetime
 import traceback
 
 # other libs
-#from sense_hat import SenseHat
+from sense_hat import SenseHat
 
 # models
 from aqms.models import *
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         messdaten = Messdaten(UID=values_for_db['uuid'], Temperatur=values_for_db['temperatur'], Luftdruck=values_for_db['luftdruck'], Luftfeuchtigkeit=values_for_db['luftfeuchtigkeit'], VOC=values_for_db['voc'], FEINSTAUBPM25=values_for_db['feinstaubpm25'], FEINSTAUBPM100=values_for_db['feinstaubpm100'], Datum=values_for_db['datum'], DatumZeit=values_for_db['datumzeit'])
         messdaten.save() 
 
-        #sense.show_message("#", scroll_speed=1)
+        #SenseHat.show_message("#", scroll_speed=1)
 
 # super EVIL object -> data of folders
 class MESSDATEN:
@@ -52,10 +52,14 @@ class MESSDATEN:
 
     # ctor
     def __init__(self):
+        # initialize sensor
+        sense = SenseHat()
+        
+        # define data
         self._uuid = str(uuid.uuid4())
-        self._temperatur = 22
-        self._luftdruck = 949
-        self._luftfeuchtigkeit = 53
+        self._temperatur = sense.get_temperature()
+        self._luftdruck = sense.get_pressure()
+        self._luftfeuchtigkeit = sense.get_humidity()
         self._voc = 2.5864
         self._feinstaubpm25= 4.279
         self._feinstaubpm100 = 5.627
@@ -63,7 +67,7 @@ class MESSDATEN:
         self._datumzeit = datetime.datetime.now()
 
     def __repr__(self):
-            return str(self.__class__.__name__) + '; ' + str(self._datumzeit)'
+            return str(self.__class__.__name__) + '; ' + str(self._datumzeit)
 
     def __str__(self):
             return str(self._uuid) + '; ' + \
