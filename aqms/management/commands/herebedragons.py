@@ -20,13 +20,14 @@ from sense_hat import SenseHat
 from aqms.models import *
 
 # queues for communication between threads
-q_gen_messdaten = queue.Queue()
+#q_gen_messdaten = queue.Queue()
 q_to_db = queue.Queue()
 
 class Command(BaseCommand):
     
     # Application logic,
-    def handle(self, *args, **kwargs):
+    @classmethod
+    def handle(cls, *args, **kwargs):
         print("get data")
         try:
             pill2kill = threading.Event()  # -> cyanide pills
@@ -40,12 +41,22 @@ class Command(BaseCommand):
             to_db_thread.start()
 
             #SenseHat.show_message("#", scroll_speed=1)
+
+            for cmd in cls.get_cmd(''):
+                cmd = cmd.split(' ', 1)
+                os.sys.exit('cya')
+
         
         finally:
             pill2kill.set()
             gen_messdaten_thread.join()
             to_db_thread.join()
             #return ('done', arg_counter)
+
+    @staticmethod
+    def get_cmd(placeholder):
+        while True:
+            yield input(placeholder)
 
 # SENSORIO class -> handles all input/output from/to the sensors
 class SENSORIO:
@@ -58,17 +69,20 @@ class SENSORIO:
         try:
             while not pill2kill.is_set():
                 try:
-                    q_gen_messdaten.put(MESSDATEN())
-                    q_gen_messdaten.task_done()
+                    
+                    messdaten = MESSDATEN()
+
+                    q_to_db.put(messdaten)
 
                 except Exception as e:
+                    print('fufufufu' + str(e))
                     #fe_log = FILEIO.write_to_log('fe_log.txt', f'S_LINK_Error: {e}\n{traceback.format_exc()}')
                     continue
 
         finally:
             #if fe_log:
             #    CLIIO.print_to_shell('file create_slink_t error -> {root_dir}fe_log.txt')
-            print('create_slink_t closed')
+            print('gen_messdaten_t closed')
 
 # DBIO class -> handles all input/output from/to database
 class DBIO:
@@ -82,12 +96,23 @@ class DBIO:
             while not pill2kill.is_set() or q_to_db.full():
 
                 messdaten = q_to_db.get(block=True)  # -> wait for input
+
+                print(str(messdaten) + '\n')
                 
                 if isinstance(messdaten, MESSDATEN):
                     values_for_db = messdaten.for_db()
 
                     # push to db
-                    messdaten_db = Messdaten(UID=values_for_db['uuid'], Temperatur=values_for_db['temperatur'], Luftdruck=values_for_db['luftdruck'], Luftfeuchtigkeit=values_for_db['luftfeuchtigkeit'], VOC=values_for_db['voc'], FEINSTAUBPM25=values_for_db['feinstaubpm25'], FEINSTAUBPM100=values_for_db['feinstaubpm100'], Datum=values_for_db['datum'], DatumZeit=values_for_db['datumzeit'])
+                    messdaten_db = Messdaten(UID=values_for_db['uuid'], \
+                                   Temperatur=values_for_db['temperatur'], \
+                                   Luftdruck=values_for_db['luftdruck'], \
+                                   Luftfeuchtigkeit=values_for_db['luftfeuchtigkeit'], \
+                                   VOC=values_for_db['voc'], \
+                                   FEINSTAUBPM25=values_for_db['feinstaubpm25'], \
+                                   FEINSTAUBPM100=values_for_db['feinstaubpm100'], \
+                                   Datum=values_for_db['datum'], \
+                                   DatumZeit=values_for_db['datumzeit'])
+
                     messdaten_db.save() 
 
                 q_to_db.task_done()
@@ -129,15 +154,15 @@ class MESSDATEN:
             return str(self.__class__.__name__) + '; ' + str(self._datumzeit)
 
     def __str__(self):
-            return str(self._uuid) + '; ' + \
-                   str(self._temperatur) + '; ' + \
-                   str(self._luftdruck) + '; ' + \
-                   str(self._luftfeuchtigkeit) + '; ' + \
-                   str(self._voc) + '; ' + \
-                   str(self._feinstaubpm25) + '; ' + \
-                   str(self._feinstaubpm100) + '; ' + \
-                   str(self._datum) + '; ' + \
-                   str(self._datumzeit)
+            return 'uuid: ' + str(self._uuid) + '; \n' + \
+                   'temperatur: ' + str(self._temperatur) + '; \n' + \
+                   'luftdruck: ' + str(self._luftdruck) + '; \n' + \
+                   'luftfeuchtigkeit: ' + str(self._luftfeuchtigkeit) + '; \n' + \
+                   'voc: ' + str(self._voc) + '; \n' + \
+                   'feinstaubpm25: ' + str(self._feinstaubpm25) + '; \n' + \
+                   'feinstaubpm100: ' + str(self._feinstaubpm100) + '; \n' + \
+                   'datum:' + str(self._datum) + '; \n' + \
+                   'datumzeit:' + str(self._datumzeit)
 
     # props
     def get_uuid(self):
