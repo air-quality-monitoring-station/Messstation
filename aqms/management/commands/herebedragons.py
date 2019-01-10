@@ -42,11 +42,8 @@ class Command(BaseCommand):
 
             #SenseHat.show_message("#", scroll_speed=1)
 
-            for cmd in cls.get_cmd(''):
-                cmd = cmd.split(' ', 1)
-                os.sys.exit('cya')
+            cls.get_message('')
 
-        
         finally:
             pill2kill.set()
             gen_messdaten_thread.join()
@@ -54,9 +51,13 @@ class Command(BaseCommand):
             #return ('done', arg_counter)
 
     @staticmethod
-    def get_cmd(placeholder):
+    def get_message(placeholder):
         while True:
-            yield input(placeholder)
+            sense = SenseHat()
+            sense.clear()
+            red = (255,0,0)
+
+            sense.show_message("HTL - TATü", text_colour=red)
 
 # SENSORIO class -> handles all input/output from/to the sensors
 class SENSORIO:
