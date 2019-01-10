@@ -10,7 +10,8 @@ from django.core.management.base import BaseCommand
 # standard libs
 import uuid
 import datetime
-import traceback
+import threading
+import queue
 
 # other libs
 from sense_hat import SenseHat
@@ -18,24 +19,82 @@ from sense_hat import SenseHat
 # models
 from aqms.models import *
 
+# queues for communication between threads
+q_gen_messdaten = queue.Queue()
+q_to_db = queue.Queue()
+
 class Command(BaseCommand):
     
     # Application logic,
     def handle(self, *args, **kwargs):
         print("get data")
+        try:
+            pill2kill = threading.Event()  # -> cyanide pills
 
-        self.messdaten = MESSDATEN()
+            gen_messdaten_thread = threading.Thread(target=SENSORIO.gen_messdaten_t, args=(pill2kill,))
+            gen_messdaten_thread.daemon = True  # -> dies after main thread is closed
+            gen_messdaten_thread.start()
 
-        values_for_db = self.messdaten.for_db()
+            to_db_thread = threading.Thread(target=DBIO.to_db_t, args=(pill2kill,))
+            to_db_thread.daemon = True  # -> dies after main thread is closed
+            to_db_thread.start()
 
-        print(self.messdaten)
-        print(self.messdaten.get_uuid())
+            #SenseHat.show_message("#", scroll_speed=1)
+        
+        finally:
+            pill2kill.set()
+            gen_messdaten_thread.join()
+            to_db_thread.join()
+            #return ('done', arg_counter)
 
-        # push to db
-        messdaten = Messdaten(UID=values_for_db['uuid'], Temperatur=values_for_db['temperatur'], Luftdruck=values_for_db['luftdruck'], Luftfeuchtigkeit=values_for_db['luftfeuchtigkeit'], VOC=values_for_db['voc'], FEINSTAUBPM25=values_for_db['feinstaubpm25'], FEINSTAUBPM100=values_for_db['feinstaubpm100'], Datum=values_for_db['datum'], DatumZeit=values_for_db['datumzeit'])
-        messdaten.save() 
+# SENSORIO class -> handles all input/output from/to the sensors
+class SENSORIO:
+    # meths
+    @staticmethod
+    def gen_messdaten_t(pill2kill):  # <- code of gen_messdaten_t thread
 
-        #SenseHat.show_message("#", scroll_speed=1)
+        #fe_log = None
+
+        try:
+            while not pill2kill.is_set():
+                try:
+                    q_gen_messdaten.put(MESSDATEN())
+                    q_gen_messdaten.task_done()
+
+                except Exception as e:
+                    #fe_log = FILEIO.write_to_log('fe_log.txt', f'S_LINK_Error: {e}\n{traceback.format_exc()}')
+                    continue
+
+        finally:
+            #if fe_log:
+            #    CLIIO.print_to_shell('file create_slink_t error -> {root_dir}fe_log.txt')
+            print('create_slink_t closed')
+
+# DBIO class -> handles all input/output from/to database
+class DBIO:
+    # meths
+    @staticmethod
+    def to_db_t(pill2kill):  # <- code of to_db_t thread
+        
+        #dbe_log = None
+
+        try:
+            while not pill2kill.is_set() or q_to_db.full():
+
+                messdaten = q_to_db.get(block=True)  # -> wait for input
+                
+                if isinstance(messdaten, MESSDATEN):
+                    values_for_db = messdaten.for_db()
+
+                    # push to db
+                    messdaten_db = Messdaten(UID=values_for_db['uuid'], Temperatur=values_for_db['temperatur'], Luftdruck=values_for_db['luftdruck'], Luftfeuchtigkeit=values_for_db['luftfeuchtigkeit'], VOC=values_for_db['voc'], FEINSTAUBPM25=values_for_db['feinstaubpm25'], FEINSTAUBPM100=values_for_db['feinstaubpm100'], Datum=values_for_db['datum'], DatumZeit=values_for_db['datumzeit'])
+                    messdaten_db.save() 
+
+                q_to_db.task_done()
+        finally:
+            #if fe_log:
+            #    CLIIO.print_to_shell('file create_slink_t error -> {root_dir}fe_log.txt')
+            print('to_db_t closed')
 
 # super EVIL object -> data of folders
 class MESSDATEN:
